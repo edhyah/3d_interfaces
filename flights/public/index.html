@@ -3,15 +3,98 @@
     <head>
         <title>3D Flight Tracker</title>
         <meta name="description" content="Real-time flight tracker in 3D">
-        <script src="https://aframe.io/releases/0.5.0/aframe.min.js"></script>
-    </head>
-    <body>
-        <a-scene>
-            <a-box position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9"></a-box>
-            <a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E"></a-sphere>
-            <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
-            <a-plane position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4"></a-plane>
-            <a-sky color="#ECECEC"></a-sky>
-        </a-scene>
+<script src="//unpkg.com/d3-dsv"></script>
+    <script src="//unpkg.com/index-array-by"></script>
+
+    <script src="//unpkg.com/aframe"></script>
+    <script src="//unpkg.com/aframe-extras/dist/aframe-extras.min.js"></script>
+    <script src="//unpkg.com/aframe-globe-component/dist/aframe-globe-component.min.js"></script>
+  </head>
+  <body>
+    <a-scene stats>
+      <a-entity position="0 0 25" movement-controls="fly: true; speed: 0.5">
+        <a-entity cursor="rayOrigin: mouse; mouseCursorStylesEnabled: true;" raycaster="objects: [globe]; interval: 100"></a-entity>
+        <a-entity laser-controls="hand: left" raycaster="objects: [globe]; interval: 100; lineColor: steelblue; lineOpacity: 0.85; "></a-entity>
+        <a-entity laser-controls="hand: right" raycaster="objects: [globe]; interval: 100; lineColor: steelblue; lineOpacity: 0.85;"></a-entity>
+
+        <a-camera look-controls="pointerLockEnabled: false" wasd-controls="enabled: false">
+          <!-- <a-cursor color="lavender" opacity="0.5" raycaster="objects: [globe]"></a-cursor>-->
+          <a-text
+            id="globe-tooltip"
+            position="0 -0.6 -1"
+            width="2"
+            align="center"
+            color="lavender"
+          ></a-text>
+        </a-camera>
+      </a-entity>
+
+      <a-sky color="#001"></a-sky>
+
+      <a-entity id="globe" scale="0.1 0.1 0.1" globe="
+        globe-image-url: //unpkg.com/three-globe/example/img/earth-night.jpg;
+      "></a-entity>
+    </a-scene>
+
+    <script>
+      const COUNTRY = 'United States';
+      const OPACITY = 0.22;
+
+      const globeEntity = document.getElementById('globe');
+      globeEntity.setAttribute('globe', {
+        arcStartLat: d => +d.srcAirport.lat,
+        arcStartLng: d => +d.srcAirport.lng,
+        arcEndLat: d => +d.dstAirport.lat,
+        arcEndLng: d => +d.dstAirport.lng,
+        arcDashLength: 0.25,
+        arcDashGap: 1,
+        arcDashInitialGap: () => Math.random(),
+        arcDashAnimateTime: 4000,
+        arcColor: d => [`rgba(0, 255, 0, ${OPACITY})`, `rgba(255, 0, 0, ${OPACITY})`],
+        arcsTransitionDuration: 0,
+
+        pointColor: () => 'orange',
+        pointAltitude: 0,
+        pointRadius:0.02,
+        pointsMerge: true,
+
+        onHover: hoverObj => {
+          let label = '';
+          if (hoverObj && hoverObj.type === 'arc') {
+            const d = hoverObj.data;
+            label = `${d.airline}: ${d.srcIata} > ${d.dstIata}`;
+          }
+          document.querySelector('#globe-tooltip').setAttribute('value', label);
+        }
+      });
+
+      // load data
+      const airportParse = ([airportId, name, city, country, iata, icao, lat, lng, alt, timezone, dst, tz, type, source]) => ({ airportId, name, city, country, iata, icao, lat, lng, alt, timezone, dst, tz, type, source });
+      const routeParse = ([airline, airlineId, srcIata, srcAirportId, dstIata, dstAirportId, codeshare, stops, equipment]) => ({ airline, airlineId, srcIata, srcAirportId, dstIata, dstAirportId, codeshare, stops, equipment});
+
+      Promise.all([
+        fetch('https://raw.githubusercontent.com/jpatokal/openflights/master/data/airports.dat').then(res => res.text())
+          .then(d => d3.csvParseRows(d, airportParse)),
+        fetch('https://raw.githubusercontent.com/jpatokal/openflights/master/data/routes.dat').then(res => res.text())
+          .then(d => d3.csvParseRows(d, routeParse))
+      ]).then(([airports, routes]) => {
+
+        const byIata = indexBy(airports, 'iata', false);
+
+        const filteredRoutes = routes
+          .filter(d => byIata.hasOwnProperty(d.srcIata) && byIata.hasOwnProperty(d.dstIata)) // exclude unknown airports
+          .filter(d => d.stops === '0') // non-stop flights only
+          .map(d => Object.assign(d, {
+            srcAirport: byIata[d.srcIata],
+            dstAirport: byIata[d.dstIata]
+          }))
+          .filter(d => d.srcAirport.country === COUNTRY && d.dstAirport.country !== COUNTRY); // international routes from country
+
+        globeEntity.setAttribute('globe', {
+          pointsData: airports,
+          arcsData: filteredRoutes
+        });
+      });
+    </script>
     </body>
 </html>
