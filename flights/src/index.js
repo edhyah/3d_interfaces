@@ -1,1 +1,1 @@
-console.log('hello world from src!');
+require('./js/airlineroutes');
