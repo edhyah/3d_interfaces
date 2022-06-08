@@ -1,5 +1,6 @@
 require('aframe-globe-component');
 
+/*
 const COUNTRY = 'United States';
 const OPACITY = 0.22;
 
@@ -57,3 +58,4 @@ Promise.all([
         arcsData: filteredRoutes
     });
 });
+*/
