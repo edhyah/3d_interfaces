@@ -45,7 +45,12 @@ AFRAME.registerComponent('flightviewer', {
     },
 
     onThumbstickMoved: function (evt) {
-        console.log('Thumbstick moved!');
+        var globeScale = this.globeScale || this.globeEl.object3D.scale.x;
+        globeScale -= evt.detail.y / 20;
+        globeScale = Math.min(Math.max(0.1, globeScale), 0.25);
+        console.log(globeScale);
+        this.globeEl.object3D.scale.set(globeScale, globeScale, globeScale);
+        this.globeScale = globeScale;
         console.log(this.cameraRigEl.getAttribute('position'));
     }
 });
