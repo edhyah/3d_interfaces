@@ -1,19 +1,13 @@
+require('aframe-globe-component');
+
 AFRAME.registerComponent('flightviewer', {
     init: function () {
-        var el = this.el;
-
         this.onThumbstickMoved = this.onThumbstickMoved.bind(this);
         this.onTriggerDown = this.onTriggerDown.bind(this);
         this.onTriggerUp = this.onTriggerUp.bind(this);
 
         this.initCameraRig();
-
-        this.globeEl = document.createElement('a-entity');
-        this.globeEl.id = 'globe';
-        this.globeEl.object3D.scale.set(0.1, 0.1, 0.1);
-        this.globeEl.setAttribute('globe', {'globeImageUrl': '//unpkg.com/three-globe/example/img/earth-night.jpg'})
-        this.globeEl.classList.add('raycastable');
-        el.appendChild(this.globeEl);
+        this.initGlobe();
 
         this.leftHandEl.addEventListener('thumbstickmoved', this.onThumbstickMoved);
         this.rightHandEl.addEventListener('thumbstickmoved', this.onThumbstickMoved);
@@ -51,10 +45,19 @@ AFRAME.registerComponent('flightviewer', {
         this.el.appendChild(cameraRigEl);
     },
 
+    initGlobe: function () {
+        this.globeEl = document.createElement('a-entity');
+        this.globeEl.id = 'globe';
+        this.globeEl.object3D.scale.set(0.1, 0.1, 0.1);
+        this.globeEl.setAttribute('globe', {'globeImageUrl': '//unpkg.com/three-globe/example/img/earth-blue-marble.jpg'})
+        this.globeEl.classList.add('raycastable');
+        this.el.appendChild(this.globeEl);
+    },
+
     onThumbstickMoved: function (evt) {
         var globeScale = this.globeScale || this.globeEl.object3D.scale.x;
         globeScale -= evt.detail.y / 20;
-        globeScale = Math.min(Math.max(0.1, globeScale), 0.25);
+        globeScale = Math.min(Math.max(0.1, globeScale), 0.22);
         this.globeEl.object3D.scale.set(globeScale, globeScale, globeScale);
         this.globeScale = globeScale;
     },
@@ -79,8 +82,8 @@ AFRAME.registerComponent('flightviewer', {
         this.oldHandX = this.oldHandX || intersectionPosition.x;
         this.oldHandY = this.oldHandY || intersectionPosition.y;
 
-        this.globeEl.object3D.rotation.y -= (this.oldHandX - intersectionPosition.x) / 4;
-        this.globeEl.object3D.rotation.x += (this.oldHandY - intersectionPosition.y) / 4;
+        this.globeEl.object3D.rotation.y -= (this.oldHandX - intersectionPosition.x) / 12;
+        this.globeEl.object3D.rotation.x += (this.oldHandY - intersectionPosition.y) / 12;
 
         this.oldHandX = intersectionPosition.x;
         this.oldHandY = intersectionPosition.y;
