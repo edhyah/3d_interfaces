@@ -1,2 +1,2 @@
-require('./js/controller');
+require('./js/flightviewer');
 require('./js/airlineroutes');
