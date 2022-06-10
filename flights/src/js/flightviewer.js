@@ -18,6 +18,35 @@ AFRAME.registerComponent('flightviewer', {
 
         this.cameraRigEl.object3D.position.set(0, 0, 25);
         this.cameraRigEl.setAttribute('movement-controls', {fly: true, speed: 0.5});
+
+        const N = 10;
+        const arcsData = [...Array(N).keys()].map(() => ({
+            startLat: (Math.random() - 0.5) * 180,
+            startLng: (Math.random() - 0.5) * 360,
+            endLat: (Math.random() - 0.5) * 180,
+            endLng: (Math.random() - 0.5) * 360,
+            color: [['red', 'white', 'blue', 'green'][Math.round(Math.random() * 3)], ['red', 'white', 'blue', 'green'][Math.round(Math.random() * 3)]]
+        }));
+        this.globeEl.setAttribute('globe', {
+            arcsData: arcsData,
+            arcColor: 'color',
+        });
+
+
+        const planeShape = new THREE.Shape();
+        planeShape.moveTo(0, 0);
+        planeShape.lineTo(1, 0.5);
+        planeShape.lineTo(2, 0);
+        planeShape.lineTo(1, 2);
+        planeShape.lineTo(0, 0);
+        const extrudeSettings = { depth: 0.1, bevelEnabled: false };
+
+        const planeGeometry = new THREE.ExtrudeGeometry(planeShape, extrudeSettings);
+        const planeMaterial = new THREE.MeshLambertMaterial({ color: 'red', transparent: true, opacity: 0.7 });
+        this.globeEl.setAttribute('globe', {
+            objectThreeObject: () => new THREE.Mesh(planeGeometry, planeMaterial)
+        });
+        this.globeEl.setAttribute('globe', 'objectsData', [{lat: 40.4168, lng: -3.70379, alt: 1000}]);
     },
 
     initCameraRig: function () {
