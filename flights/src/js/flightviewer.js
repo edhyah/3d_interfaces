@@ -19,6 +19,7 @@ AFRAME.registerComponent('flightviewer', {
         this.cameraRigEl.object3D.position.set(0, 0, 25);
         this.cameraRigEl.setAttribute('movement-controls', {fly: true, speed: 0.5});
 
+        // Test rendering of random arcs (flight paths)
         const N = 10;
         const arcsData = [...Array(N).keys()].map(() => ({
             startLat: (Math.random() - 0.5) * 180,
@@ -32,7 +33,7 @@ AFRAME.registerComponent('flightviewer', {
             arcColor: 'color',
         });
 
-
+        // Test rendering of plane icon over Madrid
         const planeShape = new THREE.Shape();
         planeShape.moveTo(0, 0);
         planeShape.lineTo(1, 0.5);
@@ -40,13 +41,36 @@ AFRAME.registerComponent('flightviewer', {
         planeShape.lineTo(1, 2);
         planeShape.lineTo(0, 0);
         const extrudeSettings = { depth: 0.1, bevelEnabled: false };
-
-        const planeGeometry = new THREE.ExtrudeGeometry(planeShape, extrudeSettings);
-        const planeMaterial = new THREE.MeshLambertMaterial({ color: 'red', transparent: true, opacity: 0.7 });
+        this.planeGeometry = new THREE.ExtrudeGeometry(planeShape, extrudeSettings);
+        this.planeMaterial = new THREE.MeshLambertMaterial({ color: 'red', transparent: true, opacity: 0.7 });
+        /*
         this.globeEl.setAttribute('globe', {
-            objectThreeObject: () => new THREE.Mesh(planeGeometry, planeMaterial)
+            objectThreeObject: () => new THREE.Mesh(this.planeGeometry, this.planeMaterial),
+            objectsData: [{lat: 40.4168, lng: -3.70379, alt: 1000}]
         });
-        this.globeEl.setAttribute('globe', 'objectsData', [{lat: 40.4168, lng: -3.70379, alt: 1000}]);
+        */
+
+        // Test OpenSky API call to Delta Airlines
+        // Next:
+        // - render planes for each airline (lat, long, alt?)
+        fetch('https://opensky-network.org/api/states/all')
+            .then(response => response.json())
+            .then(data => {
+                const states = data['states'].filter(state => /DAL(.*)/.test(state[1]));
+                const flights = states.map(state => ({
+                    lat: state[5],
+                    lng: state[6],
+                    //alt: state[7] // TODO: check if null and check units
+                    alt: 1000
+                }));
+                this.globeEl.setAttribute('globe', {
+                    objectThreeObject: () => new THREE.Mesh(this.planeGeometry, this.planeMaterial),
+                    objectsData: flights
+                });
+                console.log(this.globeEl.getAttribute('globe')['objectsData'][0]['__threeObj']);
+                var obj = this.globeEl.getAttribute('globe')['objectsData'][0]['__threeObj'];
+                obj.rotateZ(1.5);
+            });
     },
 
     initCameraRig: function () {
