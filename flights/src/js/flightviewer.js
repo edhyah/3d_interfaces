@@ -58,8 +58,8 @@ AFRAME.registerComponent('flightviewer', {
             .then(data => {
                 const states = data['states'].filter(state => /DAL(.*)/.test(state[1]));
                 const flights = states.map(state => ({
-                    lat: state[5],
-                    lng: state[6],
+                    lat: state[6],
+                    lng: state[5],
                     //alt: state[7] // TODO: check if null and check units
                     alt: 1000
                 }));
@@ -67,9 +67,9 @@ AFRAME.registerComponent('flightviewer', {
                     objectThreeObject: () => new THREE.Mesh(this.planeGeometry, this.planeMaterial),
                     objectsData: flights
                 });
-                console.log(this.globeEl.getAttribute('globe')['objectsData'][0]['__threeObj']);
-                var obj = this.globeEl.getAttribute('globe')['objectsData'][0]['__threeObj'];
-                obj.rotateZ(1.5);
+                //console.log(this.globeEl.getAttribute('globe')['objectsData'][0]['__threeObj']);
+                //var obj = this.globeEl.getAttribute('globe')['objectsData'][0]['__threeObj'];
+                //obj.rotateZ(1.5);
             });
     },
 
