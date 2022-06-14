@@ -5,6 +5,7 @@ AFRAME.registerComponent('flightviewer', {
         this.onThumbstickMoved = this.onThumbstickMoved.bind(this);
         this.onTriggerDown = this.onTriggerDown.bind(this);
         this.onTriggerUp = this.onTriggerUp.bind(this);
+        this.renderFlights = this.renderFlights.bind(this);
 
         this.initCameraRig();
         this.initGlobe();
@@ -18,6 +19,10 @@ AFRAME.registerComponent('flightviewer', {
 
         this.cameraRigEl.object3D.position.set(0, 0, 25);
         this.cameraRigEl.setAttribute('movement-controls', {fly: true, speed: 0.5});
+
+        // Face North America first
+        this.globeEl.object3D.rotateX(0.78);
+        this.globeEl.object3D.rotateY(1.5);
 
         // Test rendering of random arcs (flight paths)
         /*
@@ -35,35 +40,19 @@ AFRAME.registerComponent('flightviewer', {
         });
         */
 
-        // Test OpenSky API call to Delta Airlines
-        // Next:
-        // - render planes for each airline (lat, long, alt?)
-        fetch('https://opensky-network.org/api/states/all')
-            .then(response => response.json())
-            .then(data => {
-                const states = data['states'].filter(state => /DAL(.*)/.test(state[1]));
-                const flights = states.map(state => ({
-                    lat: state[6],
-                    lng: state[5],
-                    alt: (state[13] ? state[13] : 0),
-                    dir: (state[10] ? state[10] : 0)
-                }));
-                this.globeEl.setAttribute('globe', {
-                    objectThreeObject: (objectData) => {
-                        const obj = new THREE.Mesh(this.planeGeometry, this.planeMaterial);
-                        const dir = objectData['dir'] * Math.PI / 180.0;
-                        const lat = objectData['lat'] * Math.PI / 180.0;
-                        const lng = objectData['lng'] * Math.PI / 180.0;
-                        const euler = new THREE.Euler(-lat, lng, dir, 'YXZ');
-                        obj.setRotationFromEuler(euler);
-                        return obj;
-                    },
-                    objectsData: flights
-                });
-                //console.log(this.globeEl.getAttribute('globe')['objectsData'][0]['__threeObj']);
-                //var obj = this.globeEl.getAttribute('globe')['objectsData'][0]['__threeObj'];
-                //obj.rotateZ(1.5);
-            });
+        // Build plane icon over Madrid
+        const planeShape = new THREE.Shape();
+        planeShape.moveTo(0, 0);
+        planeShape.lineTo(1, 0.5);
+        planeShape.lineTo(2, 0);
+        planeShape.lineTo(1, 2);
+        planeShape.lineTo(0, 0);
+        const extrudeSettings = { depth: 0.1, bevelEnabled: false };
+        this.planeGeometry = new THREE.ExtrudeGeometry(planeShape, extrudeSettings);
+        this.planeMaterial = new THREE.MeshLambertMaterial({ color: 'red', transparent: true, opacity: 0.7 });
+
+        this.renderFlights();
+        setInterval(this.renderFlights, 15000);
     },
 
     initCameraRig: function () {
@@ -98,6 +87,35 @@ AFRAME.registerComponent('flightviewer', {
         this.globeEl.setAttribute('globe', {'globeImageUrl': '//unpkg.com/three-globe/example/img/earth-blue-marble.jpg'})
         this.globeEl.classList.add('raycastable');
         this.el.appendChild(this.globeEl);
+    },
+
+    renderFlights: function () {
+        fetch('https://opensky-network.org/api/states/all')
+            .then(response => response.json())
+            .then(data => {
+                const states = data['states'].filter(state => /DAL(.*)/.test(state[1]));
+                const flights = states.map(state => ({
+                    lat: state[6],
+                    lng: state[5],
+                    alt: (state[13] ? state[13] : 0),
+                    dir: (state[10] ? state[10] : 0)
+                }));
+                this.globeEl.setAttribute('globe', {
+                    objectThreeObject: (objectData) => {
+                        const obj = new THREE.Mesh(this.planeGeometry, this.planeMaterial);
+                        const dir = objectData['dir'] * Math.PI / 180.0;
+                        const lat = objectData['lat'] * Math.PI / 180.0;
+                        const lng = objectData['lng'] * Math.PI / 180.0;
+                        const euler = new THREE.Euler(-lat, lng, dir, 'YXZ');
+                        obj.setRotationFromEuler(euler);
+                        return obj;
+                    },
+                    objectsData: flights
+                });
+                //console.log(this.globeEl.getAttribute('globe')['objectsData'][0]['__threeObj']);
+                //var obj = this.globeEl.getAttribute('globe')['objectsData'][0]['__threeObj'];
+                //obj.rotateZ(1.5);
+            });
     },
 
     onThumbstickMoved: function (evt) {
