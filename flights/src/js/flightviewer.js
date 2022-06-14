@@ -20,6 +20,7 @@ AFRAME.registerComponent('flightviewer', {
         this.cameraRigEl.setAttribute('movement-controls', {fly: true, speed: 0.5});
 
         // Test rendering of random arcs (flight paths)
+        /*
         const N = 10;
         const arcsData = [...Array(N).keys()].map(() => ({
             startLat: (Math.random() - 0.5) * 180,
@@ -31,22 +32,6 @@ AFRAME.registerComponent('flightviewer', {
         this.globeEl.setAttribute('globe', {
             arcsData: arcsData,
             arcColor: 'color',
-        });
-
-        // Test rendering of plane icon over Madrid
-        const planeShape = new THREE.Shape();
-        planeShape.moveTo(0, 0);
-        planeShape.lineTo(1, 0.5);
-        planeShape.lineTo(2, 0);
-        planeShape.lineTo(1, 2);
-        planeShape.lineTo(0, 0);
-        const extrudeSettings = { depth: 0.1, bevelEnabled: false };
-        this.planeGeometry = new THREE.ExtrudeGeometry(planeShape, extrudeSettings);
-        this.planeMaterial = new THREE.MeshLambertMaterial({ color: 'red', transparent: true, opacity: 0.7 });
-        /*
-        this.globeEl.setAttribute('globe', {
-            objectThreeObject: () => new THREE.Mesh(this.planeGeometry, this.planeMaterial),
-            objectsData: [{lat: 40.4168, lng: -3.70379, alt: 1000}]
         });
         */
 
@@ -60,11 +45,19 @@ AFRAME.registerComponent('flightviewer', {
                 const flights = states.map(state => ({
                     lat: state[6],
                     lng: state[5],
-                    //alt: state[7] // TODO: check if null and check units
-                    alt: 1000
+                    alt: (state[13] ? state[13] : 0),
+                    dir: (state[10] ? state[10] : 0)
                 }));
                 this.globeEl.setAttribute('globe', {
-                    objectThreeObject: () => new THREE.Mesh(this.planeGeometry, this.planeMaterial),
+                    objectThreeObject: (objectData) => {
+                        const obj = new THREE.Mesh(this.planeGeometry, this.planeMaterial);
+                        const dir = objectData['dir'] * Math.PI / 180.0;
+                        const lat = objectData['lat'] * Math.PI / 180.0;
+                        const lng = objectData['lng'] * Math.PI / 180.0;
+                        const euler = new THREE.Euler(-lat, lng, dir, 'YXZ');
+                        obj.setRotationFromEuler(euler);
+                        return obj;
+                    },
                     objectsData: flights
                 });
                 //console.log(this.globeEl.getAttribute('globe')['objectsData'][0]['__threeObj']);
