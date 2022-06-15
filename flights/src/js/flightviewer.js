@@ -1,4 +1,6 @@
 require('aframe-globe-component');
+import globeImg from '../img/earthmap8k.jpg'; // Quest supports up to 8k
+import bumpImg from '../img/earthbump8k.jpg';
 
 AFRAME.registerComponent('flightviewer', {
     init: function () {
@@ -84,7 +86,7 @@ AFRAME.registerComponent('flightviewer', {
         this.globeEl = document.createElement('a-entity');
         this.globeEl.id = 'globe';
         this.globeEl.object3D.scale.set(0.1, 0.1, 0.1);
-        this.globeEl.setAttribute('globe', {'globeImageUrl': '//unpkg.com/three-globe/example/img/earth-blue-marble.jpg'})
+        this.globeEl.setAttribute('globe', {'globeImageUrl': globeImg, 'bumpImageUrl': bumpImg})
         this.globeEl.classList.add('raycastable');
         this.el.appendChild(this.globeEl);
     },

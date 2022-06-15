@@ -23,6 +23,10 @@ module.exports = {
                         loader: 'html-loader',
                     }
                 ]
+            },
+            {
+                test: /\.(png|svg|jpg|gif)$/,
+                use: ['file-loader']
             }
         ]
     },
