@@ -1,6 +1,12 @@
 require('aframe-globe-component');
-import globeImg from '../img/earthmap8k.jpg'; // Quest supports up to 8k
-import bumpImg from '../img/earthbump8k.jpg';
+
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
+import planeModel from '../assets/boeing787lp.fbx';
+
+// Quest supports up to 8k texture maps
+// Source: https://www.shadedrelief.com/natural3/
+import globeImg from '../assets/earthmap8k.jpg';
+import bumpImg from '../assets/earthbump8k.jpg';
 
 AFRAME.registerComponent('flightviewer', {
     init: function () {
@@ -42,7 +48,14 @@ AFRAME.registerComponent('flightviewer', {
         });
         */
 
-        // Build plane icon over Madrid
+        const loader = new FBXLoader();
+        loader.load(planeModel, (fbx) => {
+            this.planeMesh = fbx;
+        }, undefined, (error) => {
+            console.error(error);
+        });
+
+        // Build plane icon
         const planeShape = new THREE.Shape();
         planeShape.moveTo(0, 0);
         planeShape.lineTo(1, 0.5);
@@ -105,6 +118,8 @@ AFRAME.registerComponent('flightviewer', {
                 this.globeEl.setAttribute('globe', {
                     objectThreeObject: (objectData) => {
                         const obj = new THREE.Mesh(this.planeGeometry, this.planeMaterial);
+                        //const obj = this.planeMesh;
+                        //obj.scale.set(0.1, 0.1, 0.1);
                         const dir = objectData['dir'] * Math.PI / 180.0;
                         const lat = objectData['lat'] * Math.PI / 180.0;
                         const lng = objectData['lng'] * Math.PI / 180.0;
@@ -123,7 +138,7 @@ AFRAME.registerComponent('flightviewer', {
     onThumbstickMoved: function (evt) {
         var globeScale = this.globeScale || this.globeEl.object3D.scale.x;
         globeScale -= evt.detail.y / 20;
-        globeScale = Math.min(Math.max(0.1, globeScale), 0.22);
+        globeScale = Math.min(Math.max(0.1, globeScale), 0.18);
         this.globeEl.object3D.scale.set(globeScale, globeScale, globeScale);
         this.globeScale = globeScale;
     },
@@ -148,8 +163,8 @@ AFRAME.registerComponent('flightviewer', {
         this.oldHandX = this.oldHandX || intersectionPosition.x;
         this.oldHandY = this.oldHandY || intersectionPosition.y;
 
-        this.globeEl.object3D.rotation.y -= (this.oldHandX - intersectionPosition.x) / 12;
-        this.globeEl.object3D.rotation.x += (this.oldHandY - intersectionPosition.y) / 12;
+        this.globeEl.object3D.rotation.y -= (this.oldHandX - intersectionPosition.x) / 18;
+        this.globeEl.object3D.rotation.x += (this.oldHandY - intersectionPosition.y) / 18;
 
         this.oldHandX = intersectionPosition.x;
         this.oldHandY = intersectionPosition.y;
