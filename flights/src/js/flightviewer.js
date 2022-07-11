@@ -2,6 +2,7 @@ require('aframe-globe-component');
 
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 import planeModel from '../assets/boeing787lp.fbx';
+require('../assets/boeing787lp.png');
 
 // Quest supports up to 8k texture maps
 // Source: https://www.shadedrelief.com/natural3/
@@ -32,42 +33,49 @@ AFRAME.registerComponent('flightviewer', {
         this.globeEl.object3D.rotateX(0.78);
         this.globeEl.object3D.rotateY(1.5);
 
-        // Test rendering of random arcs (flight paths)
-        /*
-        const N = 10;
-        const arcsData = [...Array(N).keys()].map(() => ({
-            startLat: (Math.random() - 0.5) * 180,
-            startLng: (Math.random() - 0.5) * 360,
-            endLat: (Math.random() - 0.5) * 180,
-            endLng: (Math.random() - 0.5) * 360,
-            color: [['red', 'white', 'blue', 'green'][Math.round(Math.random() * 3)], ['red', 'white', 'blue', 'green'][Math.round(Math.random() * 3)]]
-        }));
-        this.globeEl.setAttribute('globe', {
-            arcsData: arcsData,
-            arcColor: 'color',
-        });
-        */
+        this.loader = new FBXLoader();
+        this.loader.load(planeModel, (fbx) => {
+            this.mesh = fbx;
 
-        const loader = new FBXLoader();
-        loader.load(planeModel, (fbx) => {
-            this.planeMesh = fbx;
+            // Change material to different color without lighting
+            var material = this.mesh.children[0].material.clone();
+            material.emissiveIntensity = 1.0;
+            material.emissive.setHex(0xe0e0e0);
+            this.mesh.children[0].material = material;
+            this.mesh.children[1].removeFromParent();
+
+            this.renderFlights();
+            //setInterval(this.renderFlights, 15000);
+
+            /*
+            const test = true;
+            if (test) {
+                this.globeEl.setAttribute('globe', {
+                    objectThreeObject: (objectData) => {
+                        const obj = this.mesh.clone();
+                        obj.scale.set(0.005, 0.005, 0.005);
+                        const dir = objectData['dir'] * Math.PI / 180.0;
+                        const lat = objectData['lat'] * Math.PI / 180.0;
+                        const lng = objectData['lng'] * Math.PI / 180.0;
+                        const euler = new THREE.Euler(-lat, lng, dir, 'YXZ');
+                        obj.setRotationFromEuler(euler);
+                        obj.rotateX(Math.PI/2);
+                        obj.rotateY(-Math.PI/2);
+                        return obj;
+                    },
+                    objectsData: [{
+                        lat: 41.8781,
+                        lng: -87.6298,
+                        alt: 1000,
+                        dir: 0
+                    }]
+                });
+                return;
+            }
+            */
         }, undefined, (error) => {
             console.error(error);
         });
-
-        // Build plane icon
-        const planeShape = new THREE.Shape();
-        planeShape.moveTo(0, 0);
-        planeShape.lineTo(1, 0.5);
-        planeShape.lineTo(2, 0);
-        planeShape.lineTo(1, 2);
-        planeShape.lineTo(0, 0);
-        const extrudeSettings = { depth: 0.1, bevelEnabled: false };
-        this.planeGeometry = new THREE.ExtrudeGeometry(planeShape, extrudeSettings);
-        this.planeMaterial = new THREE.MeshLambertMaterial({ color: 'red', transparent: true, opacity: 0.7 });
-
-        this.renderFlights();
-        setInterval(this.renderFlights, 15000);
     },
 
     initCameraRig: function () {
@@ -117,25 +125,28 @@ AFRAME.registerComponent('flightviewer', {
                 }));
                 this.globeEl.setAttribute('globe', {
                     objectThreeObject: (objectData) => {
-                        const obj = new THREE.Mesh(this.planeGeometry, this.planeMaterial);
-                        //const obj = this.planeMesh;
-                        //obj.scale.set(0.1, 0.1, 0.1);
+                        const obj = this.mesh.clone();
+                        obj.scale.set(0.005, 0.005, 0.005);
+
                         const dir = objectData['dir'] * Math.PI / 180.0;
                         const lat = objectData['lat'] * Math.PI / 180.0;
                         const lng = objectData['lng'] * Math.PI / 180.0;
                         const euler = new THREE.Euler(-lat, lng, dir, 'YXZ');
                         obj.setRotationFromEuler(euler);
+
+                        // Rotate object so that plane is flat and points north
+                        obj.rotateX(Math.PI/2);
+                        obj.rotateY(-Math.PI/2);
                         return obj;
+
                     },
                     objectsData: flights
                 });
-                //console.log(this.globeEl.getAttribute('globe')['objectsData'][0]['__threeObj']);
-                //var obj = this.globeEl.getAttribute('globe')['objectsData'][0]['__threeObj'];
-                //obj.rotateZ(1.5);
             });
     },
 
     onThumbstickMoved: function (evt) {
+        if (!this.globeEl) { return; }
         var globeScale = this.globeScale || this.globeEl.object3D.scale.x;
         globeScale -= evt.detail.y / 20;
         globeScale = Math.min(Math.max(0.1, globeScale), 0.18);
@@ -155,6 +166,7 @@ AFRAME.registerComponent('flightviewer', {
 
     tick: function () {
         if (!this.el.sceneEl.is('vr-mode') || !this.activeHandEl) { return; }
+        if (!this.globeEl) { return; }
 
         var intersection = this.activeHandEl.components.raycaster.getIntersection(this.globeEl);
         if (!intersection) { return; }
