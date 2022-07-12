@@ -1,8 +1,10 @@
-import fastf1
-import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
 import time
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+import fastf1
 
 fastf1.Cache.enable_cache('/home/edwardahn/Downloads/tempcache')
 
@@ -47,33 +49,27 @@ for row in positions.iterrows():
     data = row[1]
     ms = data['Milliseconds']
     if prev_ms != ms and prev_ms != -1:
-        data_by_ms.append(pos)
+        data_by_ms.append(np.array(pos))
         pos = []
     pos.append([ms, data['Driver'], data['X'], data['Y'], data['Z'], driver2color[data['Driver']]])
     prev_ms = ms
 
-
-
-import pdb; pdb.set_trace()
-
-# Render data respecting time
+# Render data (doesn't respect time yet)
 plt.ion()
 fig = plt.figure()
 ax = fig.add_subplot(111)
-#plt.axis([-8000, 0, -10000, 0])
+plt.axis([-8000, 0, -10000, 0])
 prev_t = 0
 for data in data_by_ms:
-    t = data[0][0]
-    #plt.title('t = %d' % int(t / 10**3))
-    plt.title('t = %d' % t)
+    t = data[0, 0]
+    plt.title('Time in milliseconds: %s' % t)
     #time.sleep(0.001 * (t - prev_t))
     prev_t = t
-    for driver_data in data:
-        plt.scatter(driver_data[2], driver_data[3], c=driver_data[5])
-        fig.canvas.draw()
-        fig.canvas.flush_events()
+    x = data[:, 2].astype(int)
+    y = data[:, 3].astype(int)
+    plt.scatter(x, y, c=data[:, 5])
+    fig.canvas.draw()
+    fig.canvas.flush_events()
 
 plt.show()
 
-#plt.plot(pos['X'], pos['Y'])
-#plt.show()
