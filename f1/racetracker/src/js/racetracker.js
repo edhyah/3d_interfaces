@@ -1,12 +1,14 @@
 AFRAME.registerComponent('racetracker', {
     init: function () {
         this.track = this.el.sceneEl.querySelector('#trackmodel');
-        this.track.object3D.scale.set(0.0005, 0.0005, 0.0005);
+        this.track.object3D.scale.set(0.00035, 0.00035, 0.00035);
+        this.track.object3D.rotation.set(3.1415, -0.803, 0);
+        this.track.object3D.position.set(-5.934, 0.75, -11.115);
 
         this.car = this.el.sceneEl.querySelector('#carmodel');
-        this.car.object3D.position.set(-6, 0.38, 13);
+        this.car.object3D.scale.set(0.1, 0.1, 0.1);
         this.car.object3D.rotation.set(0, -2.27, 0);
-        this.car.object3D.scale.set(0.02, 0.02, 0.02);
+        this.car.object3D.position.set(-6, 0.38, 13);
 
         // TODO: this needs tweaking
         this.s = [0.002, 0.0007, 0.002]
@@ -14,17 +16,36 @@ AFRAME.registerComponent('racetracker', {
 
         this.data = this.getTelemetryDataPerez();
         this.t = 0;
+
+
+        /*
+        this.path = [];
+        for (let i = 0; i < this.data.length; i++) {
+            let entity = document.createElement('a-entity');
+            entity.setAttribute('geometry', {
+                primitive: 'box',
+                height: 1,
+                width: 0.1,
+                depth: 0.1
+            });
+            this.el.sceneEl.appendChild(entity);
+            this.path.push(entity);
+        }
+        */
     },
 
     tick: function (time, timeDelta) {
         if (this.data == null) { return; }
+
         const position = this.data[this.t % this.data.length];
         const x = this.s[0]*position[2] + this.T[0];
         const y = this.s[1]*position[4] + this.T[1]; // y is elevation in Aframe
         const z = this.s[2]*position[3] + this.T[2];
         this.car.object3D.position.set(x, y, z);
+
+        //this.path[this.t].object3D.position.set(x, y, z);
+
         this.t += 1;
-        console.log(this.t);
     },
 
     getTelemetryData: function () {
