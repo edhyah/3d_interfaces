@@ -10,6 +10,11 @@
                 <a-asset-item id="carasset" src="f1.glb"></a-asset-item>
                 <a-asset-item id="trackasset" src="track.glb"></a-asset-item>
             </a-assets>
+            <a-entity
+                camera
+                look-controls
+                orbit-controls="target: 0 1.6 -0.5; minDistance: 0.5; maxDistance: 180; initialPosition: 0 5 15"
+            ></a-entity>
             <a-entity racetracker>
                 <a-gltf-model id="carmodel" src="#carasset" scale="1 1 1"></a-gltf-model>
                 <a-gltf-model id="trackmodel" src="#trackasset" scale="1 1 1"></a-gltf-model>
