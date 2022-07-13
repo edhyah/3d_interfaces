@@ -57,7 +57,7 @@ for row in positions.iterrows():
 print('[')
 for data in data_by_ms:
     for data_driver in data:
-        print('\t' + str(data_driver) + ',')
+        print('            ' + str(data_driver) + ',')
 print('];')
 
 # Render data (doesn't respect time)
