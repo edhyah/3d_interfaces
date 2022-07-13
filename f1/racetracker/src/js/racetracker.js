@@ -1,5 +1,9 @@
 AFRAME.registerComponent('racetracker', {
     init: function () {
+        // Track is upside down and noticed it late so this is a hack.
+        this.el.object3D.rotation.set(3.1415, 1.57, 0);
+        this.el.object3D.position.set(11, 2, 7);
+
         this.track = this.el.sceneEl.querySelector('#trackmodel');
         this.track.object3D.scale.set(0.00035, 0.00035, 0.00035);
         this.track.object3D.rotation.set(3.1415, -0.803, 0);
@@ -7,12 +11,11 @@ AFRAME.registerComponent('racetracker', {
 
         this.car = this.el.sceneEl.querySelector('#carmodel');
         this.car.object3D.scale.set(0.1, 0.1, 0.1);
-        this.car.object3D.rotation.set(0, -2.27, 0);
         this.car.object3D.position.set(-6, 0.38, 13);
 
-        // TODO: this needs tweaking
-        this.s = [0.002, 0.0007, 0.002]
-        this.T = [0, 0, 0];
+        // Scale data to match track pose
+        this.s = [0.002, -0.0015, 0.002]
+        this.T = [0, 1.3, 0];
 
         this.data = this.getTelemetryDataPerez();
         this.t = 0;
@@ -36,12 +39,20 @@ AFRAME.registerComponent('racetracker', {
 
     tick: function (time, timeDelta) {
         if (this.data == null) { return; }
+        const lap_t = this.t % this.data.length;
 
-        const position = this.data[this.t % this.data.length];
+        const position = this.data[lap_t];
         const x = this.s[0]*position[2] + this.T[0];
         const y = this.s[1]*position[4] + this.T[1]; // y is elevation in Aframe
         const z = this.s[2]*position[3] + this.T[2];
         this.car.object3D.position.set(x, y, z);
+
+        console.log(lap_t);
+
+
+        if (lap_t < 100) {
+            this.car.object3D.rotation.set(3.1415, -0.1745, 0);
+        }
 
         //this.path[this.t].object3D.position.set(x, y, z);
 
