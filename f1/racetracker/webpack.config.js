@@ -25,8 +25,11 @@ module.exports = {
                 ]
             },
             {
-                test: /\.(png|svg|jpg|gif|fbx)$/,
-                use: ['file-loader']
+                test: /\.(png|svg|jpg|gif|fbx|gltf|glb|bin)$/,
+                loader: 'file-loader',
+                options: {
+                    name: '[name].[ext]'
+                }
             }
         ]
     },

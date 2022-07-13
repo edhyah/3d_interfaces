@@ -3,14 +3,17 @@
     <head>
         <title>3D Formula 1 Race Tracker</title>
         <meta name="description" content="Real-time F1 race tracker in 3D">
-
-        <script src="//unpkg.com/d3-dsv"></script>
-        <script src="//unpkg.com/index-array-by"></script>
-        <script src="//unpkg.com/aframe"></script>
     </head>
     <body>
         <a-scene stats>
+            <a-assets>
+                <a-asset-item id="carasset" src="f1.glb"></a-asset-item>
+                <a-asset-item id="trackasset" src="track.glb"></a-asset-item>
+            </a-assets>
             <a-entity racetracker>
+                <a-gltf-model id="carmodel" src="#carasset" scale="1 1 1"></a-gltf-model>
+                <a-gltf-model id="trackmodel" src="#trackasset" scale="1 1 1"></a-gltf-model>
+            </a-entity>
             <a-sky color="#ECECEC"></a-sky>
         </a-scene>
     </body>
