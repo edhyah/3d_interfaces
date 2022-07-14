@@ -51,7 +51,32 @@ AFRAME.registerComponent('racetracker', {
 
 
         if (lap_t < 100) {
-            this.car.object3D.rotation.set(3.1415, -0.1745, 0);
+            const yaw = 3.1415;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 159) {
+            const yaw = 1.222;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 185) {
+            const yaw = 3.1415;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 228) {
+            const yaw = 2.44;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 255) {
+            const yaw = -2.44;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 283) {
+            const yaw = -0.349;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 303) {
+            const yaw = -1.920;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 340) {
+            const yaw = 3.1415;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 383) {
+            const yaw = -1.57
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
         }
 
         //this.path[this.t].object3D.position.set(x, y, z);
