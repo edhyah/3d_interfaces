@@ -39,7 +39,7 @@ AFRAME.registerComponent('racetracker', {
 
     tick: function (time, timeDelta) {
         if (this.data == null) { return; }
-        const lap_t = this.t % this.data.length;
+        const lap_t = this.t % (380-110) + 110;
 
         const position = this.data[lap_t];
         const x = this.s[0]*position[2] + this.T[0];
@@ -47,39 +47,151 @@ AFRAME.registerComponent('racetracker', {
         const z = this.s[2]*position[3] + this.T[2];
         this.car.object3D.position.set(x, y, z);
 
-        console.log(lap_t);
-
-
-        if (lap_t < 100) {
-            const yaw = 3.1415;
+        if (lap_t < 110) {        // doesn't get executed
+            const yaw = 180 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 115) { // start first straight
+            const yaw = 80 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 118) {
+            const yaw = 90 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 135) {
+            const yaw = 100 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 163) {
+            const yaw = 100 * Math.PI / 180;
             this.car.object3D.rotation.set(3.1415, yaw, 0);
         } else if (lap_t < 159) {
-            const yaw = 1.222;
+            const yaw = 90 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 163) { // start first turn
+            const yaw = 120 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 168) {
+            const yaw = 140 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 171) {
+            const yaw = 160 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 173) {
+            const yaw = 180 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 175) {
+            const yaw = 200 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 178) { // end first turn
+            const yaw = 220 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 180) { // start second turn
+            const yaw = 210 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 183) {
+            const yaw = 200 * Math.PI / 180;
             this.car.object3D.rotation.set(3.1415, yaw, 0);
         } else if (lap_t < 185) {
-            const yaw = 3.1415;
+            const yaw = 190 * Math.PI / 180;
             this.car.object3D.rotation.set(3.1415, yaw, 0);
-        } else if (lap_t < 228) {
-            const yaw = 2.44;
+        } else if (lap_t < 188) {
+            const yaw = 170 * Math.PI / 180;
             this.car.object3D.rotation.set(3.1415, yaw, 0);
-        } else if (lap_t < 255) {
-            const yaw = -2.44;
+        } else if (lap_t < 191) {
+            const yaw = 150 * Math.PI / 180;
             this.car.object3D.rotation.set(3.1415, yaw, 0);
-        } else if (lap_t < 283) {
-            const yaw = -0.349;
+        } else if (lap_t < 195) { // end second turn
+            const yaw = 140 * Math.PI / 180;
             this.car.object3D.rotation.set(3.1415, yaw, 0);
-        } else if (lap_t < 303) {
-            const yaw = -1.920;
+        } else if (lap_t < 220) {
+            const yaw = 130 * Math.PI / 180;
             this.car.object3D.rotation.set(3.1415, yaw, 0);
-        } else if (lap_t < 340) {
-            const yaw = 3.1415;
+        } else if (lap_t < 230) { // start third turn
+            const yaw = 120 * Math.PI / 180;
             this.car.object3D.rotation.set(3.1415, yaw, 0);
-        } else if (lap_t < 383) {
-            const yaw = -1.57
+        } else if (lap_t < 232) {
+            const yaw = 90 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 234) {
+            const yaw = 60 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 236) {
+            const yaw = 30 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 238) {
+            const yaw = 0 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 245) { // end third turn
+            const yaw = 10 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 255) { // start fourth turn
+            const yaw = 30 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 257) {
+            const yaw = 60 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 260) {
+            const yaw = 90 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 262) {
+            const yaw = 120 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 264) {
+            const yaw = 150 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 266) {
+            const yaw = 180 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 275) { // end fourth turn
+            const yaw = 200 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 288) { // start fifth turn
+            const yaw = 180 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 290) {
+            const yaw = 160 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 292) {
+            const yaw = 140 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 294) {
+            const yaw = 120 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 296) {
+            const yaw = 100 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 310) { // end fifth turn
+            const yaw = 90 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 316) { // start sixth turn
+            const yaw = 60 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 318) {
+            const yaw = 30 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 320) {
+            const yaw = 0 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 322) {
+            const yaw = -10 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 340) { // end sixth turn
+            const yaw = -10 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 350) {
+            const yaw = -20 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 356) { // start seventh turn
+            const yaw = -40 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 358) {
+            const yaw = -50 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 370) { // end seventh turn
+            const yaw = -70 * Math.PI / 180;
+            this.car.object3D.rotation.set(3.1415, yaw, 0);
+        } else if (lap_t < 380) {
+            const yaw = -80 * Math.PI / 180;
             this.car.object3D.rotation.set(3.1415, yaw, 0);
         }
-
-        //this.path[this.t].object3D.position.set(x, y, z);
 
         this.t += 1;
     },
