@@ -234,24 +234,38 @@ AFRAME.registerComponent('racetracker', {
         } else if (lap_t < 322) {
             const yaw = -10 * Math.PI / 180;
             this.car.object3D.rotation.set(3.1415, yaw, 0);
+            const position = this.car.object3D.position;
+            this.car.object3D.position.set(position.x, position.y+0.07, position.z);
         } else if (lap_t < 340) { // end sixth turn
             const yaw = -10 * Math.PI / 180;
             this.car.object3D.rotation.set(3.1415, yaw, 0);
+            const position = this.car.object3D.position;
+            this.car.object3D.position.set(position.x, position.y+0.16, position.z);
         } else if (lap_t < 350) {
             const yaw = -20 * Math.PI / 180;
             this.car.object3D.rotation.set(3.1415, yaw, 0);
+            const position = this.car.object3D.position;
+            this.car.object3D.position.set(position.x, position.y+0.2, position.z);
         } else if (lap_t < 356) { // start seventh turn
             const yaw = -40 * Math.PI / 180;
             this.car.object3D.rotation.set(3.1415, yaw, 0);
+            const position = this.car.object3D.position;
+            this.car.object3D.position.set(position.x, position.y+0.2, position.z);
         } else if (lap_t < 358) {
             const yaw = -50 * Math.PI / 180;
             this.car.object3D.rotation.set(3.1415, yaw, 0);
+            const position = this.car.object3D.position;
+            this.car.object3D.position.set(position.x, position.y+0.2, position.z);
         } else if (lap_t < 370) { // end seventh turn
             const yaw = -70 * Math.PI / 180;
             this.car.object3D.rotation.set(3.1415, yaw, 0);
+            const position = this.car.object3D.position;
+            this.car.object3D.position.set(position.x, position.y+0.2, position.z);
         } else if (lap_t < 380) {
             const yaw = -80 * Math.PI / 180;
             this.car.object3D.rotation.set(3.1415, yaw, 0);
+            const position = this.car.object3D.position;
+            this.car.object3D.position.set(position.x, position.y+0.2, position.z);
         }
 
         this.speed_counter += 1;
