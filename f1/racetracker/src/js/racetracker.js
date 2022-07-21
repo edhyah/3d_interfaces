@@ -13,6 +13,32 @@ AFRAME.registerComponent('racetracker', {
         this.car.object3D.scale.set(0.1, 0.1, 0.1);
         this.car.object3D.position.set(-6, 0.38, 13);
 
+        this.onThumbstickMoved = this.onThumbstickMoved.bind(this);
+        this.onTriggerDown = this.onTriggerDown.bind(this);
+        this.onTriggerUp = this.onTriggerUp.bind(this);
+        this.onGripDown = this.onGripDown.bind(this);
+        this.onGripUp = this.onGripUp.bind(this);
+
+        // TODO: Put this all in the HTML file
+        this.cameraRigEl = this.el.sceneEl.querySelector('#rig');
+        this.cameraEl = this.el.sceneEl.querySelector('#camera');
+        this.rightHandEl = this.el.sceneEl.querySelector('#righthandcontroller');
+        this.cameraEl.setAttribute('look-controls', {pointerLockEnabled: false});
+        this.rightHandEl.setAttribute('laser-controls', {hand: 'right'});
+        this.rightHandEl.setAttribute('raycaster', {objects: ['.raycastable'], interval: 100, lineColor: 'steelblue', lineOpacity: 0.85});
+        this.cameraRigEl.setAttribute('movement-controls', {fly: true, speed: 0.5});
+        this.cameraRigEl.object3D.position.set(0, 2, 10);
+        this.cameraRigEl.object3D.rotation.set(0, -1.0, 0);
+
+        this.rightHandEl.addEventListener('thumbstickmoved', this.onThumbstickMoved);
+        this.rightHandEl.addEventListener('triggerdown', this.onTriggerDown);
+        this.rightHandEl.addEventListener('triggerup', this.onTriggerUp);
+        this.rightHandEl.addEventListener('gripdown', this.onGripDown);
+        this.rightHandEl.addEventListener('gripup', this.onGripUp);
+
+        this.entities = this.el.sceneEl.querySelector('#entities');
+        this.entities.classList.add('raycastable');
+
         // Scale data to match track pose
         this.s = [0.002, -0.0015, 0.002]
         this.T = [0, 1.3, 0];
@@ -27,10 +53,55 @@ AFRAME.registerComponent('racetracker', {
         this.speed_counter = 0;
     },
 
+    onThumbstickMoved: function (evt) {
+        const position = this.cameraRigEl.object3D.position;
+        if (this.gripped) {
+            this.cameraRigEl.object3D.position.set(position.x, position.y-evt.detail.y/10, position.z);
+        } else {
+            this.cameraRigEl.object3D.position.set(position.x+evt.detail.x/10, position.y, position.z+evt.detail.y/10);
+        }
+    },
+
+    onTriggerDown: function (evt) {
+        this.activeHandEl = evt.srcElement;
+    },
+
+    onTriggerUp: function (evt) {
+        this.oldHandX = undefined;
+        this.oldHandY = undefined;
+        this.oldHandZ = undefined;
+        this.activeHandEl = undefined;
+    },
+
+    onGripDown: function (evt) {
+        this.gripped = true;
+    },
+
+    onGripUp: function (evt) {
+        this.gripped = false;
+    },
+
     tick: function (time, timeDelta) {
         if (this.data == null) { return; }
-        const lap_t = this.t % (380-110) + 110;
 
+        // TODO: rotation doesn't work well (rotates about origin, even though assets aren't at origin)
+        if (this.activeHandEl) {
+            let intersection = this.activeHandEl.components.raycaster.getIntersection(this.entities)
+            if (intersection) {
+                let intersectionPosition = intersection.point;
+                this.oldHandX = this.oldHandX || intersectionPosition.x;
+                this.oldHandY = this.oldHandY || intersectionPosition.y;
+                this.oldHandZ = this.oldHandZ || intersectionPosition.z;
+                this.cameraRigEl.object3D.rotation.y -= (this.oldHandX - intersectionPosition.x) / 25;
+                this.cameraRigEl.object3D.rotation.x += (this.oldHandY - intersectionPosition.y) / 25;
+                this.cameraRigEl.object3D.rotation.z += (this.oldHandZ - intersectionPosition.z) / 15;
+                this.oldHandX = intersectionPosition.x;
+                this.oldHandY = intersectionPosition.y;
+                this.oldHandZ = intersectionPosition.z;
+            }
+        }
+
+        const lap_t = this.t % (380-110) + 110;
         const position = this.data[lap_t];
         const x = this.s[0]*position[2] + this.T[0];
         const y = this.s[1]*position[4] + this.T[1]; // y is elevation in Aframe
