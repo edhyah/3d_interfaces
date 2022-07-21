@@ -20,21 +20,11 @@ AFRAME.registerComponent('racetracker', {
         this.data = this.getTelemetryDataPerez();
         this.t = 0;
 
-
-        /*
-        this.path = [];
-        for (let i = 0; i < this.data.length; i++) {
-            let entity = document.createElement('a-entity');
-            entity.setAttribute('geometry', {
-                primitive: 'box',
-                height: 1,
-                width: 0.1,
-                depth: 0.1
-            });
-            this.el.sceneEl.appendChild(entity);
-            this.path.push(entity);
-        }
-        */
+        // Control speed of simulation
+        // Each frame is 1/fps*0.001 of real time in seconds
+        // Speed down factor is 1 divided by above number
+        this.speed_threshold = 3;
+        this.speed_counter = 0;
     },
 
     tick: function (time, timeDelta) {
@@ -193,7 +183,8 @@ AFRAME.registerComponent('racetracker', {
             this.car.object3D.rotation.set(3.1415, yaw, 0);
         }
 
-        this.t += 1;
+        this.speed_counter += 1;
+        this.t = parseInt(this.speed_counter / this.speed_threshold);
     },
 
     getTelemetryData: function () {
