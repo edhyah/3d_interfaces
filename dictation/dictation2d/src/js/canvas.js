@@ -1,16 +1,61 @@
 let canvas = null;
 let ctx = null;
 
+const fontSize = 30;
+
 // Mouse position
 let startX;
 let startY;
 
-// List of all available words surrounding middle box
+// List of dictionaries containing words that can be dragged into the prompt box
 let availableWords = [];
+// Index for `availableWords` for the word that is selected / is dragging
 let selectedWordIndex = -1;
+
+// List of dictionaries containing segments that are in the prompt box currently
+// Note: There are at most 2 segments (0 segments if there are no words in the
+// prompt box, 2 segments if the user is attempting to drag a word into the
+// prompt box, 1 segment otherwise).
+let promptSegments = [];
 
 init();
 draw();
+
+function getPromptBoxBoundingBox() {
+    let ww = window.innerWidth;
+    let wh = window.innerHeight;
+    return {
+        x: ww/2-ww/4*3/2,
+        y: wh/2-100/2,
+        width: ww/4*3,
+        height: 100
+    };
+}
+
+// Note: This method is different from `hitTestShape`.
+function hitTestText(x, y, word) {
+    const bboxX = word.x;
+    const bboxY = word.y;
+    const bboxWidth = word.width;
+    const bboxHeight = word.height;
+    return (bboxX <= x && x <= bboxX + bboxWidth
+        && bboxY - bboxHeight <= y && y <= bboxY)
+}
+
+// Note: This method is different from `hitTestText`.
+function hitTestShape(x, y, bboxX, bboxY, bboxWidth, bboxHeight) {
+    return (bboxX <= x && x <= bboxX + bboxWidth
+        && bboxY <= y && y <= bboxY + bboxHeight)
+}
+
+function getDividingIndex(x, y) {
+    let ww = window.innerWidth;
+    let wh = window.innerHeight;
+    const textBBoxX = ctx.measureText();
+    //word1.width = ctx.measureText(word1.text).width;
+
+    return 1;
+}
 
 function onWindowResize() {
     canvas.width = window.innerWidth;
@@ -18,17 +63,12 @@ function onWindowResize() {
     draw();
 }
 
-function hitTest(x, y, bboxX, bboxY, bboxWidth, bboxHeight) {
-    return (bboxX <= x && x <= bboxX + bboxWidth
-        && bboxY - bboxHeight <= y && y <= bboxY)
-}
-
 function onMouseDown(e) {
     startX = e.clientX;
     startY = e.clientY;
     for (let i = 0; i < availableWords.length; i++) {
         let word = availableWords[i];
-        if (hitTest(startX, startY, word.x, word.y, word.width, word.height)) {
+        if (hitTestText(startX, startY, word)) {
             selectedWordIndex = i;
             return;
         }
@@ -47,6 +87,12 @@ function onMouseMove(e) {
     word.x += dx;
     word.y += dy;
 
+    const dims = getPromptBoxBoundingBox();
+    if (hitTestShape(startX, startY, dims.x, dims.y, dims.width, dims.height)) {
+        const dividingIndex = getDividingIndex(startX, startY);
+        console.log('word inside prompt box');
+    }
+
     draw();
     startX = mouseX;
     startY = mouseY;
@@ -62,15 +108,13 @@ function onMouseOut() {
 
 // Delete this once WebSpeech API is integrated
 function getTestAvailableWords() {
-    ctx.font = '30px serif';
-
     let word1 = {
         text: 'tacos',
         x: 100,
         y: 100
     };
     word1.width = ctx.measureText(word1.text).width;
-    word1.height = 30;
+    word1.height = fontSize;
     availableWords.push(word1);
 
     let word2 = {
@@ -79,8 +123,15 @@ function getTestAvailableWords() {
         y: 100
     }
     word2.width = ctx.measureText(word2.text).width;
-    word2.height = 30;
+    word2.height = fontSize;
     availableWords.push(word2);
+}
+
+function getTestPrompt() {
+    let segment = {
+        text: 'hello world',
+    }
+    promptSegments.push(segment);
 }
 
 function init() {
@@ -89,6 +140,7 @@ function init() {
     canvas.height = window.innerHeight;
     document.body.appendChild(canvas);
     ctx = canvas.getContext('2d');
+    ctx.font = fontSize + 'px sans-serif';
 
     window.addEventListener('resize', onWindowResize);
     canvas.addEventListener('mousedown', onMouseDown);
@@ -97,26 +149,45 @@ function init() {
     canvas.addEventListener('mouseout', onMouseOut);
 
     getTestAvailableWords();
+    getTestPrompt();
 }
 
-function draw() {
+function drawPrompt() {
     let ww = window.innerWidth;
     let wh = window.innerHeight;
-    ctx.clearRect(0, 0, ww, wh);
 
-    // Middle box
+    // Prompt box
+    const dims = getPromptBoxBoundingBox();
     ctx.strokeStyle = '#000000';
-    ctx.strokeRect(ww/2-ww/4*3/2, wh/2-100/2, ww/4*3, 100);
-    ctx.font = '30px serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('Hello world', ww/2, wh/2);
+    ctx.strokeRect(dims.x, dims.y, dims.width, dims.height);
 
-    // Render available words above middle box
+    // Words in prompt box
+    if (promptSegments.length === 0) {
+        return;
+    } else if (promptSegments.length === 1) {
+        const w = ctx.measureText(promptSegments[0].text).width;
+        const h = fontSize - 15;  // TODO: investigate why subtracting 15 works
+        ctx.fillText(promptSegments[0].text, ww/2 - w/2, wh/2 + h/2);
+    } else if (promptSegments.length === 2){
+        console.log('not implemented yet');
+    } else {
+        console.error('Internal error: too many segments in prompt.');
+    }
+}
+
+function drawAvailable() {
     ctx.textAlign = 'start';
     ctx.textBaseline = 'alphabetic';
     for (let i = 0; i < availableWords.length; i++) {
         let word = availableWords[i];
         ctx.fillText(word.text, word.x, word.y);
     }
+}
+
+function draw() {
+    let ww = window.innerWidth;
+    let wh = window.innerHeight;
+    ctx.clearRect(0, 0, ww, wh);
+    drawPrompt();
+    drawAvailable();
 }
