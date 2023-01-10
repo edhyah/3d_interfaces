@@ -127,11 +127,22 @@ function onWindowResize() {
 function onMouseDown(e) {
     startX = e.clientX;
     startY = e.clientY;
+
     for (let i = 0; i < availableWords.length; i++) {
         let word = availableWords[i];
         if (hitTestText(startX, startY, word)) {
             selectedWordIndex = i;
             return;
+        }
+    }
+
+    if (promptSegments.length > 1) console.error('Internal error: prompt merging failed.');
+    for (let i = 0; i < promptSegments[0].length; i++) {
+        let word = promptSegments[0][i];
+        if (hitTestText(startX, startY, word)) {
+            availableWords.push(word);
+            selectedWordIndex = availableWords.length - 1;
+            promptSegments[0].splice(i, 1);
         }
     }
 }
