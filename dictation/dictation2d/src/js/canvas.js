@@ -22,8 +22,8 @@ init();
 draw();
 
 function getPromptBoxBoundingBox() {
-    let ww = window.innerWidth;
-    let wh = window.innerHeight;
+    const ww = window.innerWidth;
+    const wh = window.innerHeight;
     return {
         x: ww/2-ww/4*3/2,
         y: wh/2-100/2,
@@ -48,14 +48,53 @@ function hitTestShape(x, y, bboxX, bboxY, bboxWidth, bboxHeight) {
         && bboxY <= y && y <= bboxY + bboxHeight)
 }
 
-function getDividingIndex(x, y) {
-    return 1;
-    let ww = window.innerWidth;
-    let wh = window.innerHeight;
-    const textBBoxX = ctx.measureText();
-    //word1.width = ctx.measureText(word1.text).width;
+function divideToPromptSegments(x, y) {
+    const leftSegment = [];
+    const rightSegment = [];
 
-    return 1;
+    let dividedSegment = 0;
+    let dividingIndex = -1;
+    let stop = false;
+    for (let i = 0; i < promptSegments.length; i++) {
+        let segment = promptSegments[i];
+        for (let j = 0; j < segment.length; j++) {
+            const word = segment[j];
+            const bboxX = word.x;
+            const bboxY = word.y;
+            const bboxWidth = word.width;
+            const bboxHeight = word.height;
+
+            // All words have the same y bounding box, so return if y not in it
+            if (y < bboxY - bboxHeight || bboxY < y) return;
+
+            if (x <= bboxX + bboxWidth/2) {
+                dividedSegment = i;
+                dividingIndex = j;
+                stop = true;
+                break;
+            } else {
+                leftSegment.push(word);
+            }
+        }
+        if (stop) break;
+    }
+
+    if (dividingIndex !== -1) {
+        for (let i = dividedSegment; i < promptSegments.length; i++) {
+            let segment = promptSegments[i];
+            for (let j = dividingIndex; j < segment.length; j++) {
+                const word = segment[j];
+                rightSegment.push(word);
+            }
+            dividingIndex = 0;  // Only applies to divided segment; reset to 0
+        }
+    }
+
+    promptSegments = [leftSegment, rightSegment];
+}
+
+function mergePromptSegments() {
+    return;
 }
 
 function onWindowResize() {
@@ -91,8 +130,7 @@ function onMouseMove(e) {
 
     const dims = getPromptBoxBoundingBox();
     if (hitTestShape(startX, startY, dims.x, dims.y, dims.width, dims.height)) {
-        const dividingIndex = getDividingIndex(startX, startY);
-        console.log('word inside prompt box');
+        divideToPromptSegments(startX, startY);
     }
 
     draw();
@@ -113,37 +151,36 @@ function getTestAvailableWords() {
     let word1 = {
         text: 'tacos',
         x: 100,
-        y: 100
+        y: 100,
+        height: fontSize
     };
     word1.width = ctx.measureText(word1.text).width;
-    word1.height = fontSize;
     availableWords.push(word1);
 
     let word2 = {
         text: 'arm swing',
         x: 250,
-        y: 100
+        y: 100,
+        height: fontSize
     }
     word2.width = ctx.measureText(word2.text).width;
-    word2.height = fontSize;
     availableWords.push(word2);
 }
 
 function getTestPrompt() {
-    let word1 = { text: 'hello' };
+    let word1 = { text: 'hello', height: fontSize };
     word1.width = ctx.measureText(word1.text).width;
-    let word2 = { text: 'world' };
+    let word2 = { text: 'world', height: fontSize };
     word2.width = ctx.measureText(word2.text).width;
-    let segment1 = [word1, word2];
-    promptSegments.push(segment1);
 
-    let word3 = { text: 'javascript' };
+    let word3 = { text: 'javascript', height: fontSize };
     word3.width = ctx.measureText(word3.text).width;
-    let word4 = { text: 'guilt' };
+    let word4 = { text: 'guilt', height: fontSize };
     word4.width = ctx.measureText(word4.text).width;
-    let segment2 = [word3, word4];
 
-    promptSegments.push(segment2);
+    //promptSegments.push([word1, word2]);
+    //promptSegments.push([word3, word4]);
+    promptSegments.push([word1, word2, word3, word4]);
 }
 
 function init() {
@@ -193,9 +230,9 @@ function drawSegments(segments, offset) {
         let segment = segments[i];
         for (let j = 0; j < segment.length; j++) {
             const word = segment[j];
-            const wordX = word.x + initialX + offset/2 * (i === 0 ? -1 : 1);
-            const wordY = initialY;
-            ctx.fillText(word.text, wordX, wordY);
+            word.x += initialX + offset/2 * (i === 0 ? -1 : 1);
+            word.y = initialY;
+            ctx.fillText(word.text, word.x, word.y);
         }
     }
 }
@@ -212,7 +249,8 @@ function drawPrompt() {
     } else if (promptSegments.length === 1) {
         drawSegments(promptSegments, 0);
     } else if (promptSegments.length === 2){
-        const offset = ctx.measureText('arm swing').width + 8.335;
+        const selectedWord = availableWords[selectedWordIndex];
+        const offset = ctx.measureText(selectedWord.text).width + 8.335;
         drawSegments(promptSegments, offset);
     } else {
         console.error('Internal error: too many segments in prompt.');
@@ -229,8 +267,8 @@ function drawAvailable() {
 }
 
 function draw() {
-    let ww = window.innerWidth;
-    let wh = window.innerHeight;
+    const ww = window.innerWidth;
+    const wh = window.innerHeight;
     ctx.clearRect(0, 0, ww, wh);
 
     drawPrompt();
