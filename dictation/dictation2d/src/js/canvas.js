@@ -98,6 +98,25 @@ function mergePromptSegments() {
     promptSegments = [promptSegments[0].concat(promptSegments[1])];
 }
 
+function mergePromptSegmentsWithSelectedWord() {
+    if (promptSegments.length !== 2) return;    // Word wasn't placed in box
+
+    const word = availableWords[selectedWordIndex];
+    const leftSegment = promptSegments[0];
+    const rightSegment = promptSegments[1];
+    if (leftSegment.length === 0) {
+        leftSegment.push(word);
+    } else if (rightSegment.length === 0) {
+        rightSegment.push(word);
+    } else {
+        leftSegment.push(word);
+    }
+
+    availableWords.splice(selectedWordIndex, 1);
+    mergePromptSegments();
+    draw();
+}
+
 function onWindowResize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -142,10 +161,12 @@ function onMouseMove(e) {
 }
 
 function onMouseUp() {
+    if (selectedWordIndex >= 0) mergePromptSegmentsWithSelectedWord();
     selectedWordIndex = -1;
 }
 
 function onMouseOut() {
+    if (selectedWordIndex >= 0) mergePromptSegmentsWithSelectedWord();
     selectedWordIndex = -1;
 }
 
