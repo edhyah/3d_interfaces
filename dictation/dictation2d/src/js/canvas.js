@@ -94,7 +94,8 @@ function divideToPromptSegments(x, y) {
 }
 
 function mergePromptSegments() {
-    return;
+    if (promptSegments.length < 2) return;
+    promptSegments = [promptSegments[0].concat(promptSegments[1])];
 }
 
 function onWindowResize() {
@@ -131,6 +132,8 @@ function onMouseMove(e) {
     const dims = getPromptBoxBoundingBox();
     if (hitTestShape(startX, startY, dims.x, dims.y, dims.width, dims.height)) {
         divideToPromptSegments(startX, startY);
+    } else {
+        mergePromptSegments();
     }
 
     draw();
