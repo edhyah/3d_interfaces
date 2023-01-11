@@ -1,3 +1,7 @@
+import clearIconImagePath from '../assets/icons/clear.png';
+import searchIconImagePath from '../assets/icons/search.png';
+import voiceIconImagePath from '../assets/icons/voice.png';
+
 let canvas = null;
 let ctx = null;
 
@@ -17,6 +21,13 @@ let selectedWordIndex = -1;
 // prompt box, 2 segments if the user is attempting to drag a word into the
 // prompt box, 1 segment otherwise).
 let promptSegments = [];
+
+let clearIcon;
+let searchIcon;
+let voiceIcon;
+let clearIconLoaded = false;
+let searchIconLoaded = false;
+let voiceIconLoaded = false;
 
 init();
 draw();
@@ -210,7 +221,7 @@ function getTestPrompt() {
 
     let word3 = { text: 'javascript', height: fontSize };
     word3.width = ctx.measureText(word3.text).width;
-    let word4 = { text: 'guilt', height: fontSize };
+    let word4 = { text: 'waves', height: fontSize };
     word4.width = ctx.measureText(word4.text).width;
 
     //promptSegments.push([word1, word2]);
@@ -259,7 +270,7 @@ function drawSegments(segments, offset) {
     }
 
     // Render words together
-    const initialX = ww/2 - cumulativeWidth/2;
+    const initialX = ww/2 - cumulativeWidth/2 - 50; // 50px offset for icons
     const initialY = wh/2 + (fontSize - 15)/2; // TODO: why does this work
     for (let i = 0; i < segments.length; i++) {
         let segment = segments[i];
@@ -272,11 +283,68 @@ function drawSegments(segments, offset) {
     }
 }
 
-function drawPrompt() {
-    // Prompt box
+function drawPromptBox() {
+    const ww = window.innerWidth;
+    const wh = window.innerHeight;
+
     const dims = getPromptBoxBoundingBox();
     ctx.strokeStyle = '#000000';
-    ctx.strokeRect(dims.x, dims.y, dims.width, dims.height);
+    ctx.beginPath();
+    ctx.roundRect(dims.x, dims.y, dims.width, dims.height, [20]);
+    ctx.stroke();
+
+    const clearIconLength = 20;
+    const clearIconX = ww/2 + dims.width/2 - 7*clearIconLength;
+    const clearIconY = wh/2 - clearIconLength/2;
+    if (clearIconLoaded) {
+        ctx.drawImage(clearIcon, clearIconX, clearIconY, clearIconLength, clearIconLength);
+    } else {
+        clearIcon = new Image();
+        clearIcon.src = clearIconImagePath;
+        clearIcon.onload = () => {
+            clearIconLoaded = true;
+            ctx.drawImage(clearIcon, clearIconX, clearIconY, clearIconLength, clearIconLength);
+        }
+    }
+
+    ctx.strokeStyle = '#6c6c6c';
+    ctx.beginPath();
+    ctx.moveTo(ww/2 + dims.width/2 - 100, wh/2 - (dims.height/2 - 25));
+    ctx.lineTo(ww/2 + dims.width/2 - 100, wh/2 + (dims.height/2 - 25));
+    ctx.closePath();
+    ctx.stroke();
+
+    const searchIconLength = 24;
+    const searchIconX = ww/2 + dims.width/2 - 2*searchIconLength;
+    const searchIconY = wh/2 - searchIconLength/2;
+    if (searchIconLoaded) {
+        ctx.drawImage(searchIcon, searchIconX, searchIconY, searchIconLength, searchIconLength);
+    } else {
+        searchIcon = new Image();
+        searchIcon.src = searchIconImagePath;
+        searchIcon.onload = () => {
+            searchIconLoaded = true;
+            ctx.drawImage(searchIcon, searchIconX, searchIconY, searchIconLength, searchIconLength);
+        }
+    }
+
+    const voiceIconLength = 25;
+    const voiceIconX = ww/2 + dims.width/2 - 3.5*voiceIconLength;
+    const voiceIconY = wh/2 - voiceIconLength/2;
+    if (voiceIconLoaded) {
+        ctx.drawImage(voiceIcon, voiceIconX, voiceIconY, voiceIconLength, voiceIconLength);
+    } else {
+        voiceIcon = new Image();
+        voiceIcon.src = voiceIconImagePath;
+        voiceIcon.onload = () => {
+            voiceIconLoaded = true;
+            ctx.drawImage(voiceIcon, voiceIconX, voiceIconY, voiceIconLength, voiceIconLength);
+        }
+    }
+}
+
+function drawPrompt() {
+    drawPromptBox();
 
     // Words in prompt box
     if (promptSegments.length === 0) {
