@@ -22,6 +22,8 @@ let selectedWordIndex = -1;
 // prompt box, 1 segment otherwise).
 let promptSegments = [];
 
+let currentlyRecording = false;
+
 let clearIcon;
 let searchIcon;
 let voiceIcon;
@@ -41,6 +43,30 @@ function getPromptBoxBoundingBox() {
         width: ww/4*3,
         height: 100
     };
+}
+
+function getIconBoundingBoxes() {
+    const ww = window.innerWidth;
+    const wh = window.innerHeight;
+    const dims = getPromptBoxBoundingBox();
+
+    const clearIconLength = 20;
+    const clearIconX = ww/2 + dims.width/2 - 7*clearIconLength;
+    const clearIconY = wh/2 - clearIconLength/2;
+
+    const searchIconLength = 24;
+    const searchIconX = ww/2 + dims.width/2 - 2*searchIconLength;
+    const searchIconY = wh/2 - searchIconLength/2;
+
+    const voiceIconLength = 25;
+    const voiceIconX = ww/2 + dims.width/2 - 3.5*voiceIconLength;
+    const voiceIconY = wh/2 - voiceIconLength/2;
+
+    return {
+        clear: { x: clearIconX, y: clearIconY, len: clearIconLength },
+        search: { x: searchIconX, y: searchIconY, len: searchIconLength },
+        voice: { x: voiceIconX, y: voiceIconY, len: voiceIconLength },
+    }
 }
 
 // Note: This method is different from `hitTestShape`.
@@ -128,6 +154,25 @@ function mergePromptSegmentsWithSelectedWord() {
     draw();
 }
 
+function clearPrompt() {
+    selectedWordIndex = -1;
+    availableWords = [];
+    promptSegments = [];
+    draw();
+}
+
+function startDictation() {
+    console.log('Started dictation');
+}
+
+function stopDictation() {
+    console.log('Stopped dictation');
+}
+
+function searchPrompt() {
+    console.log('Searching prompt...');
+}
+
 function onWindowResize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -148,12 +193,36 @@ function onMouseDown(e) {
     }
 
     if (promptSegments.length > 1) console.error('Internal error: prompt merging failed.');
-    for (let i = 0; i < promptSegments[0].length; i++) {
-        let word = promptSegments[0][i];
-        if (hitTestText(startX, startY, word)) {
-            availableWords.push(word);
-            selectedWordIndex = availableWords.length - 1;
-            promptSegments[0].splice(i, 1);
+    if (promptSegments.length !== 0) {
+        for (let i = 0; i < promptSegments[0].length; i++) {
+            let word = promptSegments[0][i];
+            if (hitTestText(startX, startY, word)) {
+                availableWords.push(word);
+                selectedWordIndex = availableWords.length - 1;
+                promptSegments[0].splice(i, 1);
+            }
+        }
+    }
+
+    const idims = getIconBoundingBoxes();
+    for (const icon in idims) {
+        const x = idims[icon].x;
+        const y = idims[icon].y;
+        const len = idims[icon].len;
+        if (hitTestShape(startX, startY, x, y, len, len)) {
+            switch (icon) {
+                case 'clear':
+                    clearPrompt();
+                    break;
+                case 'voice':
+                    currentlyRecording = !currentlyRecording;
+                    if (currentlyRecording) startVoice();
+                    else stopVoice();
+                    break;
+                case 'search':
+                    searchPrompt();
+                    break;
+            }
         }
     }
 }
@@ -286,24 +355,22 @@ function drawSegments(segments, offset) {
 function drawPromptBox() {
     const ww = window.innerWidth;
     const wh = window.innerHeight;
-
     const dims = getPromptBoxBoundingBox();
+    const idims = getIconBoundingBoxes();
+
     ctx.strokeStyle = '#000000';
     ctx.beginPath();
     ctx.roundRect(dims.x, dims.y, dims.width, dims.height, [20]);
     ctx.stroke();
 
-    const clearIconLength = 20;
-    const clearIconX = ww/2 + dims.width/2 - 7*clearIconLength;
-    const clearIconY = wh/2 - clearIconLength/2;
     if (clearIconLoaded) {
-        ctx.drawImage(clearIcon, clearIconX, clearIconY, clearIconLength, clearIconLength);
+        ctx.drawImage(clearIcon, idims.clear.x, idims.clear.y, idims.clear.len, idims.clear.len);
     } else {
         clearIcon = new Image();
         clearIcon.src = clearIconImagePath;
         clearIcon.onload = () => {
             clearIconLoaded = true;
-            ctx.drawImage(clearIcon, clearIconX, clearIconY, clearIconLength, clearIconLength);
+            ctx.drawImage(clearIcon, idims.clear.x, idims.clear.y, idims.clear.len, idims.clear.len);
         }
     }
 
@@ -314,31 +381,25 @@ function drawPromptBox() {
     ctx.closePath();
     ctx.stroke();
 
-    const searchIconLength = 24;
-    const searchIconX = ww/2 + dims.width/2 - 2*searchIconLength;
-    const searchIconY = wh/2 - searchIconLength/2;
-    if (searchIconLoaded) {
-        ctx.drawImage(searchIcon, searchIconX, searchIconY, searchIconLength, searchIconLength);
-    } else {
-        searchIcon = new Image();
-        searchIcon.src = searchIconImagePath;
-        searchIcon.onload = () => {
-            searchIconLoaded = true;
-            ctx.drawImage(searchIcon, searchIconX, searchIconY, searchIconLength, searchIconLength);
-        }
-    }
-
-    const voiceIconLength = 25;
-    const voiceIconX = ww/2 + dims.width/2 - 3.5*voiceIconLength;
-    const voiceIconY = wh/2 - voiceIconLength/2;
     if (voiceIconLoaded) {
-        ctx.drawImage(voiceIcon, voiceIconX, voiceIconY, voiceIconLength, voiceIconLength);
+        ctx.drawImage(voiceIcon, idims.voice.x, idims.voice.y, idims.voice.len, idims.voice.len);
     } else {
         voiceIcon = new Image();
         voiceIcon.src = voiceIconImagePath;
         voiceIcon.onload = () => {
             voiceIconLoaded = true;
-            ctx.drawImage(voiceIcon, voiceIconX, voiceIconY, voiceIconLength, voiceIconLength);
+            ctx.drawImage(voiceIcon, idims.voice.x, idims.voice.y, idims.voice.len, idims.voice.len);
+        }
+    }
+
+    if (searchIconLoaded) {
+        ctx.drawImage(searchIcon, idims.search.x, idims.search.y, idims.search.len, idims.search.len);
+    } else {
+        searchIcon = new Image();
+        searchIcon.src = searchIconImagePath;
+        searchIcon.onload = () => {
+            searchIconLoaded = true;
+            ctx.drawImage(searchIcon, idims.search.x, idims.search.y, idims.search.len, idims.search.len);
         }
     }
 }
