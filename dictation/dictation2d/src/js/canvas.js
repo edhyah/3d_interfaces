@@ -23,6 +23,7 @@ let selectedWordIndex = -1;
 let promptSegments = [];
 
 let currentlyRecording = false;
+let speechRecognition = null;
 
 let clearIcon;
 let searchIcon;
@@ -161,12 +162,45 @@ function clearPrompt() {
     draw();
 }
 
+function initDictation() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    speechRecognition = new SpeechRecognition();
+    speechRecognition.continuous = true;
+    speechRecognition.lang = 'en-US';
+    speechRecognition.interimResults = true;
+    speechRecognition.maxAlternatives = 1;
+
+    speechRecognition.onresult = (event) => {
+        const utteranceList = event.results;
+        const latestUtterance = utteranceList[utteranceList.length-1];
+        const speechRecognition = latestUtterance[latestUtterance.length-1];
+        const transcript = speechRecognition.transcript.toLowerCase();
+        if (latestUtterance.isFinal) {
+            const words = transcript.split(' ');
+            const x = (window.innerWidth/2)*Math.random() + window.innerWidth/8;
+            const y = (window.innerHeight/3)*Math.random() + window.innerWidth/10;
+            for (let i = 0; i < words.length; i++) {
+                const word = {
+                    text: words[i],
+                    x: x + 100*i,
+                    y: y,
+                    height: fontSize
+                };
+                word.width = ctx.measureText(word.text).width;
+                availableWords.push(word);
+            }
+            draw();
+            console.log(transcript);
+        }
+    }
+}
+
 function startDictation() {
-    console.log('Started dictation');
+    speechRecognition.start();
 }
 
 function stopDictation() {
-    console.log('Stopped dictation');
+    speechRecognition.stop();
 }
 
 function searchPrompt() {
@@ -224,6 +258,7 @@ function onMouseDown(e) {
                     break;
                 case 'voice':
                     currentlyRecording = !currentlyRecording;
+                    drawCurrentlyRecording();
                     if (currentlyRecording) startDictation();
                     else stopDictation();
                     break;
@@ -320,6 +355,8 @@ function init() {
     canvas.addEventListener('mouseup', onMouseUp);
     canvas.addEventListener('mouseout', onMouseOut);
 
+    initDictation();
+
     getTestAvailableWords();
     getTestPrompt();
 }
@@ -360,17 +397,40 @@ function drawSegments(segments, offset) {
     }
 }
 
+// Draws red circle on top of voice icon indicating if currently recording.
+function drawCurrentlyRecording() {
+    const idims = getIconBoundingBoxes();
+    const radius = 5;
+
+    if (currentlyRecording) {
+        ctx.strokeStyle = '#ff0000';
+        ctx.fillStyle = '#ff0000';
+        ctx.beginPath();
+        ctx.arc(idims.voice.x + idims.voice.len/2, idims.voice.y - idims.voice.len/2, radius, 0, 2*Math.PI);
+        ctx.fill();
+        ctx.stroke();
+
+        // Reset colors to black
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#000000';
+    } else {
+        ctx.clearRect(idims.voice.x + idims.voice.len/2 - 1.5*radius, idims.voice.y - idims.voice.len/2 - 1.5*radius, 3*radius, 3*radius);
+    }
+}
+
 function drawPromptBox() {
     const ww = window.innerWidth;
     const wh = window.innerHeight;
     const dims = getPromptBoxBoundingBox();
     const idims = getIconBoundingBoxes();
 
+    // Prompt box outline
     ctx.strokeStyle = '#000000';
     ctx.beginPath();
     ctx.roundRect(dims.x, dims.y, dims.width, dims.height, [20]);
     ctx.stroke();
 
+    // Clear icon (an X symbol)
     if (clearIconLoaded) {
         ctx.drawImage(clearIcon, idims.clear.x, idims.clear.y, idims.clear.len, idims.clear.len);
     } else {
@@ -382,6 +442,7 @@ function drawPromptBox() {
         }
     }
 
+    // Divider separating clear icon with other icons
     ctx.strokeStyle = '#6c6c6c';
     ctx.beginPath();
     ctx.moveTo(ww/2 + dims.width/2 - 100, wh/2 - (dims.height/2 - 25));
@@ -389,6 +450,7 @@ function drawPromptBox() {
     ctx.closePath();
     ctx.stroke();
 
+    // Voice icon (microphone symbol)
     if (voiceIconLoaded) {
         ctx.drawImage(voiceIcon, idims.voice.x, idims.voice.y, idims.voice.len, idims.voice.len);
     } else {
@@ -400,6 +462,10 @@ function drawPromptBox() {
         }
     }
 
+    // Draw red circle if currently recording
+    drawCurrentlyRecording();
+
+    // Search icon (looking glass symbol)
     if (searchIconLoaded) {
         ctx.drawImage(searchIcon, idims.search.x, idims.search.y, idims.search.len, idims.search.len);
     } else {
