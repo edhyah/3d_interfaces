@@ -170,7 +170,15 @@ function stopDictation() {
 }
 
 function searchPrompt() {
-    console.log('Searching prompt...');
+    if (promptSegments.length > 1) console.log('Internal error: prompt merging failed');
+    if (promptSegments.length === 0) return;
+
+    let finalPrompt = '';
+    for (const word in promptSegments[0]) {
+        finalPrompt += promptSegments[0][word].text + '+';
+    }
+
+    window.open('https://www.google.com/search?q=' + finalPrompt, '_blank');
 }
 
 function onWindowResize() {
@@ -216,8 +224,8 @@ function onMouseDown(e) {
                     break;
                 case 'voice':
                     currentlyRecording = !currentlyRecording;
-                    if (currentlyRecording) startVoice();
-                    else stopVoice();
+                    if (currentlyRecording) startDictation();
+                    else stopDictation();
                     break;
                 case 'search':
                     searchPrompt();
