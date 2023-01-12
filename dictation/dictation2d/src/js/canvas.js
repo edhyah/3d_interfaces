@@ -292,7 +292,13 @@ function searchPrompt() {
         finalPrompt += promptSegments[0][word].text + '+';
     }
 
-    window.open('https://www.google.com/search?q=' + finalPrompt, '_blank');
+    // Ugh, Safari doesn't allow target to be set to '_blank' (which opens a new
+    // tab). It also only executes window.open requests if the request is made
+    // on the main thread. Source below:
+    // https://stackoverflow.com/questions/20696041/window-openurl-blank-not-working-on-imac-safari
+    setTimeout(() => {
+        window.open('https://www.google.com/search?q=' + finalPrompt, '_top');
+    });
 }
 
 function onWindowResize() {
@@ -303,8 +309,15 @@ function onWindowResize() {
 }
 
 function onMouseDown(e) {
-    startX = e.clientX;
-    startY = e.clientY;
+    e.preventDefault();
+
+    if (e.touches) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+    } else {
+        startX = e.clientX;
+        startY = e.clientY;
+    }
 
     for (let i = 0; i < availableWords.length; i++) {
         let word = availableWords[i];
@@ -357,10 +370,18 @@ function onMouseDown(e) {
 }
 
 function onMouseMove(e) {
+    e.preventDefault();
     if (selectedWordIndex < 0) return;
 
-    let mouseX = e.clientX;
-    let mouseY = e.clientY;
+    let mouseX, mouseY;
+    if (e.touches) {
+        mouseX = e.touches[0].clientX;
+        mouseY = e.touches[0].clientY;
+    } else {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+    }
+
     let dx = mouseX - startX;
     let dy = mouseY - startY;
 
@@ -381,13 +402,13 @@ function onMouseMove(e) {
 }
 
 function onMouseUp(e) {
-    onMouseMove(e);
-    if (selectedWordIndex >= 0) mergePromptSegmentsWithSelectedWord();
-    selectedWordIndex = -1;
-}
+    // `onMouseMove` is called because the user may click a prompt word without
+    // moving the mouse, which leads to the word becoming an available word.
+    // However, for touch, the event `e` does not have access to the x and y
+    // positions (they don't exist for touch because the finger has left the
+    // screen) so we just skip this method. Not the best, but this is a demo.
+    if (!e.touches) onMouseMove(e);
 
-function onMouseOut(e) {
-    onMouseMove(e);
     if (selectedWordIndex >= 0) mergePromptSegmentsWithSelectedWord();
     selectedWordIndex = -1;
 }
@@ -395,13 +416,6 @@ function onMouseOut(e) {
 function getTestAvailableWords() {
     generateWord('tacos', true);
     generateWord('swing', true);
-    generateWord('traction', true);
-    generateWord('information', true);
-    generateWord('mask', true);
-    generateWord('francisco', true);
-    generateWord('transformation', true);
-    generateWord('memory', true);
-    generateWord('fabric', true);
 }
 
 function getTestPrompt() {
@@ -414,6 +428,7 @@ function getTestPrompt() {
 
 function init() {
     canvas = document.createElement('canvas');
+    canvas.style.cssText = 'touch-action:none'; // Prevent scrolling on touch
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     document.body.appendChild(canvas);
@@ -424,7 +439,11 @@ function init() {
     canvas.addEventListener('mousedown', onMouseDown);
     canvas.addEventListener('mousemove', onMouseMove);
     canvas.addEventListener('mouseup', onMouseUp);
-    canvas.addEventListener('mouseout', onMouseOut);
+    canvas.addEventListener('mouseout', onMouseUp);
+    canvas.addEventListener('touchstart', onMouseDown);
+    canvas.addEventListener('touchmove', onMouseMove);
+    canvas.addEventListener('touchend', onMouseUp);
+    canvas.addEventListener('touchcancel', onMouseUp);
 
     initAvailableLocations();
     initDictation();
