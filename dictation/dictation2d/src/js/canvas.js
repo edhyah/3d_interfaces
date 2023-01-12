@@ -156,8 +156,16 @@ function mergePromptSegmentsWithSelectedWord() {
 }
 
 function clearPrompt() {
-    selectedWordIndex = -1;
-    availableWords = [];
+    if (promptSegments.length > 1) console.log('Internal error: prompt merging failed');
+    if (promptSegments.length === 0) return;
+
+    for (const wordKey in promptSegments[0]) {
+        const word = promptSegments[0][wordKey];
+        word.x = (window.innerWidth/2)*Math.random() + window.innerWidth/8;
+        word.y = (window.innerHeight/3)*Math.random() + window.innerWidth/10;
+        availableWords.push(word);
+    }
+
     promptSegments = [];
     draw();
 }
@@ -242,6 +250,7 @@ function onMouseDown(e) {
                 availableWords.push(word);
                 selectedWordIndex = availableWords.length - 1;
                 promptSegments[0].splice(i, 1);
+                return;
             }
         }
     }
