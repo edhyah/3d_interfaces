@@ -25,12 +25,19 @@ let promptSegments = [];
 let currentlyRecording = false;
 let speechRecognition = null;
 
+// Hacky way of placing available words around prompt box (available positions
+// are defined beforehand, and kept track in a stack). Once all positions are
+// occupied, random locations are used.
+let availableLocations = [];
+
 let clearIcon;
 let searchIcon;
 let voiceIcon;
 let clearIconLoaded = false;
 let searchIconLoaded = false;
 let voiceIconLoaded = false;
+
+const debug = false;
 
 init();
 draw();
@@ -68,6 +75,28 @@ function getIconBoundingBoxes() {
         search: { x: searchIconX, y: searchIconY, len: searchIconLength },
         voice: { x: voiceIconX, y: voiceIconY, len: voiceIconLength },
     }
+}
+
+function generateWord(text, setAvailable) {
+    const word = {
+        text: text,
+        x: 0,
+        y: 0,
+        height: fontSize,
+        initialLocation: null
+    };
+    word.width = ctx.measureText(word.text).width;
+
+    if (setAvailable) {
+        const availableLocation = getAvailableLocation();
+        word.x = availableLocation.x;
+        word.y = availableLocation.y;
+        word.initialLocation = availableLocation;
+
+        availableWords.push(word);
+    }
+
+    return word;
 }
 
 // Note: This method is different from `hitTestShape`.
@@ -151,8 +180,52 @@ function mergePromptSegmentsWithSelectedWord() {
     }
 
     availableWords.splice(selectedWordIndex, 1);
+    availableLocations.push(word.initialLocation);
     mergePromptSegments();
     draw();
+}
+
+function initAvailableLocations() {
+    const ww = window.innerWidth;
+    const wh = window.innerHeight;
+    const avgWordWidth = 200;
+    const wordHeight = 3*fontSize;  // Leave space between rows
+    const availableWidth = 3*ww/4;
+    const availableHeight = wh/3;
+    const availableCols = Math.floor(availableWidth / avgWordWidth);
+    const availableRows = Math.floor(availableHeight / wordHeight);
+    const xOffset = ww/8;
+    const yOffset1 = wh/6;
+    const yOffset2 = 2*wh/3;
+
+    for (let i = 0; i < availableRows; i++) {
+        for (let j = 0; j < availableCols; j++) {
+            const x = j*avgWordWidth + xOffset;
+            const y = i*wordHeight + yOffset1;
+            availableLocations.push({x: x, y: y});
+        }
+    }
+
+    for (let i = 0; i < availableRows; i++) {
+        for (let j = 0; j < availableCols; j++) {
+            const x = j*avgWordWidth + xOffset;
+            const y = i*wordHeight + yOffset2;
+            availableLocations.push({x: x, y: y});
+        }
+    }
+
+    // `availableLocations` is a stack
+    availableLocations.reverse();
+}
+
+function getAvailableLocation() {
+    if (availableLocations.length === 0) {
+        const x = (window.innerWidth/2)*Math.random() + window.innerWidth/8;
+        const y = (window.innerHeight/3)*Math.random() + window.innerHeight/2;
+        return {x: x, y: y};
+    }
+
+    return availableLocations.pop();
 }
 
 function clearPrompt() {
@@ -161,8 +234,10 @@ function clearPrompt() {
 
     for (const wordKey in promptSegments[0]) {
         const word = promptSegments[0][wordKey];
-        word.x = (window.innerWidth/2)*Math.random() + window.innerWidth/8;
-        word.y = (window.innerHeight/3)*Math.random() + window.innerWidth/10;
+        const availableLocation = getAvailableLocation();
+        word.x = availableLocation.x;
+        word.y = availableLocation.y;
+        word.initialLocation = availableLocation;
         availableWords.push(word);
     }
 
@@ -175,7 +250,7 @@ function initDictation() {
     speechRecognition = new SpeechRecognition();
     speechRecognition.continuous = true;
     speechRecognition.lang = 'en-US';
-    speechRecognition.interimResults = true;
+    speechRecognition.interimResults = false;
     speechRecognition.maxAlternatives = 1;
 
     speechRecognition.onresult = (event) => {
@@ -184,21 +259,18 @@ function initDictation() {
         const speechRecognition = latestUtterance[latestUtterance.length-1];
         const transcript = speechRecognition.transcript.toLowerCase();
         if (latestUtterance.isFinal) {
-            const words = transcript.split(' ');
-            const x = (window.innerWidth/2)*Math.random() + window.innerWidth/8;
-            const y = (window.innerHeight/3)*Math.random() + window.innerWidth/10;
+            const words = transcript.trim().split(' ');
+            const segment = [];
             for (let i = 0; i < words.length; i++) {
-                const word = {
-                    text: words[i],
-                    x: x + 100*i,
-                    y: y,
-                    height: fontSize
-                };
-                word.width = ctx.measureText(word.text).width;
-                availableWords.push(word);
+                if (promptSegments.length === 0) {
+                    segment.push(generateWord(words[i], false));
+                } else {
+                    generateWord(words[i], true);
+                }
             }
+            if (promptSegments.length === 0) promptSegments.push(segment);
             draw();
-            console.log(transcript);
+            console.log('Dictation result:', transcript);
         }
     }
 }
@@ -272,6 +344,11 @@ function onMouseDown(e) {
                     else stopDictation();
                     break;
                 case 'search':
+                    if (currentlyRecording) {
+                        currentlyRecording = false;
+                        drawCurrentlyRecording();
+                        stopDictation();
+                    }
                     searchPrompt();
                     break;
             }
@@ -303,50 +380,35 @@ function onMouseMove(e) {
     startY = mouseY;
 }
 
-function onMouseUp() {
+function onMouseUp(e) {
+    onMouseMove(e);
     if (selectedWordIndex >= 0) mergePromptSegmentsWithSelectedWord();
     selectedWordIndex = -1;
 }
 
-function onMouseOut() {
+function onMouseOut(e) {
+    onMouseMove(e);
     if (selectedWordIndex >= 0) mergePromptSegmentsWithSelectedWord();
     selectedWordIndex = -1;
 }
 
-// Delete this once WebSpeech API is integrated
 function getTestAvailableWords() {
-    let word1 = {
-        text: 'tacos',
-        x: 100,
-        y: 100,
-        height: fontSize
-    };
-    word1.width = ctx.measureText(word1.text).width;
-    availableWords.push(word1);
-
-    let word2 = {
-        text: 'arm swing',
-        x: 250,
-        y: 100,
-        height: fontSize
-    }
-    word2.width = ctx.measureText(word2.text).width;
-    availableWords.push(word2);
+    generateWord('tacos', true);
+    generateWord('swing', true);
+    generateWord('traction', true);
+    generateWord('information', true);
+    generateWord('mask', true);
+    generateWord('francisco', true);
+    generateWord('transformation', true);
+    generateWord('memory', true);
+    generateWord('fabric', true);
 }
 
 function getTestPrompt() {
-    let word1 = { text: 'hello', height: fontSize };
-    word1.width = ctx.measureText(word1.text).width;
-    let word2 = { text: 'world', height: fontSize };
-    word2.width = ctx.measureText(word2.text).width;
-
-    let word3 = { text: 'javascript', height: fontSize };
-    word3.width = ctx.measureText(word3.text).width;
-    let word4 = { text: 'waves', height: fontSize };
-    word4.width = ctx.measureText(word4.text).width;
-
-    //promptSegments.push([word1, word2]);
-    //promptSegments.push([word3, word4]);
+    let word1 = generateWord('hello', false);
+    let word2 = generateWord('world', false);
+    let word3 = generateWord('javascript', false);
+    let word4 = generateWord('waves', false);
     promptSegments.push([word1, word2, word3, word4]);
 }
 
@@ -364,10 +426,13 @@ function init() {
     canvas.addEventListener('mouseup', onMouseUp);
     canvas.addEventListener('mouseout', onMouseOut);
 
+    initAvailableLocations();
     initDictation();
 
-    getTestAvailableWords();
-    getTestPrompt();
+    if (debug) {
+        getTestAvailableWords();
+        getTestPrompt();
+    }
 }
 
 // Draws either 1 or 2 segments inside the prompt box.
