@@ -37,6 +37,8 @@ let clearIconLoaded = false;
 let searchIconLoaded = false;
 let voiceIconLoaded = false;
 
+let usingMobileSafari = false;
+
 const debug = false;
 
 init();
@@ -296,9 +298,13 @@ function searchPrompt() {
     // tab). It also only executes window.open requests if the request is made
     // on the main thread. Source below:
     // https://stackoverflow.com/questions/20696041/window-openurl-blank-not-working-on-imac-safari
-    setTimeout(() => {
-        window.open('https://www.google.com/search?q=' + finalPrompt, '_top');
-    });
+    if (usingMobileSafari) {
+        setTimeout(() => {
+            window.open('https://www.google.com/search?q=' + finalPrompt, '_top');
+        });
+    } else {
+        window.open('https://www.google.com/search?q=' + finalPrompt, '_blank');
+    }
 }
 
 function onWindowResize() {
@@ -312,6 +318,7 @@ function onMouseDown(e) {
     e.preventDefault();
 
     if (e.touches) {
+        usingMobileSafari = true;
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
     } else {
@@ -375,6 +382,7 @@ function onMouseMove(e) {
 
     let mouseX, mouseY;
     if (e.touches) {
+        usingMobileSafari = true;
         mouseX = e.touches[0].clientX;
         mouseY = e.touches[0].clientY;
     } else {
